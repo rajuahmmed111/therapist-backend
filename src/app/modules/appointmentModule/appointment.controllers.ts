@@ -158,7 +158,7 @@ const createAppointment = asyncHandler(async (req: Request, res: Response) => {
         throw new CustomError.NotFoundError('Therapist professional profile not found!');
     }
 
-    // create a new appointment
+    // Create a new appointment
     const newAppointment = await appointmentService.createAppointment(appointmentData);
     if (!newAppointment) {
         throw new CustomError.BadRequestError('Failed to create new appointment!');
