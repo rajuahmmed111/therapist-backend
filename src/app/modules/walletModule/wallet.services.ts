@@ -3,7 +3,6 @@ import paymentHistoryUtils from '../paymentHistoryModule/paymentHistory.utils';
 import { IWallet } from './wallet.interface';
 import Wallet from './wallet.model';
 import notificationUtils from '../notificationModule/notification.utils';
-import CustomError from '../../errors';
 
 // service for create or update new wallet by user id
 const createOrUpdateSpecificWallet = async (userId: string, data: Partial<IWallet>) => {
@@ -39,15 +38,21 @@ const handleWalletTopUpAfterPaymentCapture = async (event: any) => {
 
     if (!userId) return;
 
-    const wallet = await getSpecificWalletByUserId(userId);
+    let wallet = await getSpecificWalletByUserId(userId);
 
     if(!wallet){
-        throw new CustomError.BadRequestError('Wallet not found!');
+        // Create wallet if it doesn't exist
+        wallet = await createOrUpdateSpecificWallet(userId, {
+            balance: {
+                amount: amount,
+                currency: currency,
+            },
+        });
+    } else {
+        wallet.balance.amount += amount;
+        wallet.balance.currency = currency;
+        await wallet.save();
     }
-
-    wallet.balance.amount += amount;
-    wallet.balance.currency = currency;
-    await wallet.save();
     
 
     await paymentHistoryUtils.createPaymentHistory({
